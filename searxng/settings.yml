@@ -1,0 +1,30 @@
+# SearXNG configuration for local development ($0 Search Retrieval)
+use_default_settings: true
+
+general:
+  debug: false
+  instance_name: "Sirbook Local Search"
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "sirbook_local_dev_secret_key_change_in_prod"
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "es"
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    engine: google
+    enable_http: true
+  - name: duckduckgo
+    engine: duckduckgo
+    enable_http: true
+  - name: wikipedia
+    engine: wikipedia
+    enable_http: true

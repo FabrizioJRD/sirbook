@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Sirbook",
+    "slug": "sirbook",
+    "version": "2.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0C0D0E",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sirbook.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0C0D0E"
+      },
+      "package": "com.sirbook.app",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}

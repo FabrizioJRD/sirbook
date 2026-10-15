@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-main: #0c0d0e;
+    --bg-surface: #141618;
+    --bg-card: #1c1e22;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: #e4e4e7;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Glassmorphism y Cuaderno */
+.glass-panel {
+  background: rgba(20, 22, 24, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(28, 30, 34, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+/* Modo Estudio: Difuminado / Active Recall */
+.study-blur {
+  filter: blur(6px);
+  user-select: none;
+  cursor: pointer;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+  position: relative;
+}
+
+.study-blur:hover {
+  filter: blur(3px);
+}
+
+.study-revealed {
+  filter: none !important;
+  user-select: auto !important;
+}
+
+/* Cuadrícula sutil tipo libreta */
+.notebook-grid {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}

@@ -1,0 +1,25 @@
+{
+  "name": "sirbook-monorepo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Sirbook: Cuadernos inteligentes con IA y búsqueda desacoplada (Android + Web)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "searxng:up": "docker compose up -d searxng",
+    "searxng:down": "docker compose down",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
