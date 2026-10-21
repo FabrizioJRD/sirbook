@@ -126,6 +126,31 @@ export const SmartInputBar: React.FC<SmartInputBarProps> = ({
           })}
         </div>
       </form>
+
+      {/* Sugerencias Rápidas para Pruebas Inmediatas */}
+      <div className="mt-2.5 px-2 flex items-center gap-1.5 overflow-x-auto text-xs text-zinc-400">
+        <span className="text-[11px] text-zinc-500 font-medium shrink-0">Prueba rápida:</span>
+        {[
+          { label: 'Fotosíntesis', mode: 'graphic' as GenerationMode },
+          { label: 'Mitocondria', mode: 'concept' as GenerationMode },
+          { label: 'Ciclo de Krebs', mode: 'graphic' as GenerationMode },
+          { label: 'Dijkstra', mode: 'concept' as GenerationMode },
+          { label: 'Transformers', mode: 'graphic' as GenerationMode },
+          { label: 'ADN Plátano', mode: 'curiosity' as GenerationMode },
+        ].map((chip) => (
+          <button
+            key={chip.label}
+            type="button"
+            onClick={() => {
+              setKeyword(chip.label);
+              setSelectedMode(chip.mode);
+            }}
+            className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 text-[11px] shrink-0 transition-colors"
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

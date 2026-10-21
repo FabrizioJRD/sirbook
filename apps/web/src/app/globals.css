@@ -4,38 +4,53 @@
 
 @layer base {
   :root {
-    --bg-main: #0c0d0e;
-    --bg-surface: #141618;
-    --bg-card: #1c1e22;
-    --border-subtle: rgba(255, 255, 255, 0.08);
+    --bg-main: #EFEAE2;
+    --bg-surface: #FAF7F2;
+    --bg-card: #FFFFFF;
+    --border-subtle: #DFD8CB;
   }
 
   body {
     background-color: var(--bg-main);
-    color: #e4e4e7;
+    color: #2E2822;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
   }
 }
 
-/* Glassmorphism y Cuaderno */
+/* Familias tipográficas para notas y conceptos */
+.font-handwriting {
+  font-family: 'Caveat', cursive, sans-serif;
+}
+.font-serif-study {
+  font-family: 'Lora', Georgia, Cambria, serif;
+}
+.font-mono-study {
+  font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
+}
+.font-sans-study {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Paneles de Estilo Cuaderno / Papelería Cálida */
 .glass-panel {
-  background: rgba(20, 22, 24, 0.75);
+  background: rgba(250, 247, 242, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #DFD8CB;
 }
 
 .glass-card {
-  background: rgba(28, 30, 34, 0.65);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FAF7F2;
+  border: 1px solid #DFD8CB;
+  box-shadow: 0 4px 12px -2px rgba(60, 48, 35, 0.06);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: #C8BFB0;
   transform: translateY(-1px);
+  box-shadow: 0 8px 16px -4px rgba(60, 48, 35, 0.1);
 }
 
 /* Modo Estudio: Difuminado / Active Recall */
@@ -60,8 +75,166 @@
 .notebook-grid {
   background-size: 24px 24px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(145, 128, 105, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(145, 128, 105, 0.08) 1px, transparent 1px);
+}
+
+/* Papel Cuaderno: Cuadrícula Técnica */
+.notebook-paper-grid {
+  background-color: #FDFBF7;
+  background-image: 
+    linear-gradient(to right, rgba(150, 133, 110, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(150, 133, 110, 0.15) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Papel Cuaderno: Punteado / Bullet Journal */
+.notebook-paper-dots {
+  background-color: #FDFBF7;
+  background-image: radial-gradient(circle, rgba(140, 122, 100, 0.28) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+/* Papel Cuaderno: Líneas Pautadas / Ruled */
+.notebook-paper-ruled {
+  background-color: #FDFBF7;
+  background-image: linear-gradient(to bottom, rgba(150, 133, 110, 0.18) 1px, transparent 1px);
+  background-size: 100% 28px;
+}
+
+/* Papel Cuaderno: Marfil Puro / Plain */
+.notebook-paper-plain {
+  background-color: #FDFBF7;
+}
+
+/* Hojas Planas y Limpias con Bordes en Punta (Estilo Excalidraw) */
+.notebook-book-binding {
+  box-shadow:
+    0 4px 14px -2px rgba(60, 48, 35, 0.06),
+    0 1px 3px 0 rgba(60, 48, 35, 0.04);
+}
+
+/* Reglas de Impresión y Exportación Vectorial Limpia a PDF */
+@media print {
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  header, nav, button, .page-flip-stage > button {
+    display: none !important;
+  }
+  #active-notebook-sheet {
+    box-shadow: none !important;
+    border: 1px solid #D5CDBD !important;
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    page-break-after: always !important;
+  }
+}
+
+/* Contenedor y Animaciones 3D de Paso de Página (Hardware Accelerated) */
+.page-flip-stage {
+  perspective: 1600px;
+  perspective-origin: center center;
+}
+
+.page-flip-leaf {
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* 3D Realistic Book Page Flip Physics */
+@keyframes pageTurnForward {
+  0% {
+    transform: perspective(2200px) rotateY(0deg) translateZ(0);
+    box-shadow: 0 10px 30px -5px rgba(60, 48, 35, 0.15);
+  }
+  40% {
+    transform: perspective(2200px) rotateY(-25deg) translateZ(25px) scale(0.985);
+    box-shadow: 20px 20px 45px -5px rgba(45, 35, 25, 0.22);
+  }
+  80% {
+    transform: perspective(2200px) rotateY(-70deg) translateZ(10px) scale(0.97);
+    opacity: 0.9;
+    box-shadow: 10px 10px 25px -5px rgba(45, 35, 25, 0.15);
+  }
+  100% {
+    transform: perspective(2200px) rotateY(-90deg) translateZ(0) scale(0.96);
+    opacity: 0;
+  }
+}
+
+@keyframes pageTurnIncomingForward {
+  0% {
+    transform: perspective(2200px) rotateY(40deg) translateZ(-15px) scale(0.97);
+    opacity: 0.5;
+    box-shadow: -15px 15px 35px -5px rgba(45, 35, 25, 0.2);
+  }
+  65% {
+    transform: perspective(2200px) rotateY(8deg) translateZ(5px) scale(0.995);
+    opacity: 0.95;
+  }
+  100% {
+    transform: perspective(2200px) rotateY(0deg) translateZ(0) scale(1);
+    opacity: 1;
+    box-shadow: 0 10px 30px -5px rgba(60, 48, 35, 0.15);
+  }
+}
+
+@keyframes pageTurnBackward {
+  0% {
+    transform: perspective(2200px) rotateY(0deg) translateZ(0);
+    box-shadow: 0 10px 30px -5px rgba(60, 48, 35, 0.15);
+  }
+  40% {
+    transform: perspective(2200px) rotateY(25deg) translateZ(25px) scale(0.985);
+    box-shadow: -20px 20px 45px -5px rgba(45, 35, 25, 0.22);
+  }
+  80% {
+    transform: perspective(2200px) rotateY(70deg) translateZ(10px) scale(0.97);
+    opacity: 0.9;
+    box-shadow: -10px 10px 25px -5px rgba(45, 35, 25, 0.15);
+  }
+  100% {
+    transform: perspective(2200px) rotateY(90deg) translateZ(0) scale(0.96);
+    opacity: 0;
+  }
+}
+
+@keyframes pageTurnIncomingBackward {
+  0% {
+    transform: perspective(2200px) rotateY(-40deg) translateZ(-15px) scale(0.97);
+    opacity: 0.5;
+    box-shadow: 15px 15px 35px -5px rgba(45, 35, 25, 0.2);
+  }
+  65% {
+    transform: perspective(2200px) rotateY(-8deg) translateZ(5px) scale(0.995);
+    opacity: 0.95;
+  }
+  100% {
+    transform: perspective(2200px) rotateY(0deg) translateZ(0) scale(1);
+    opacity: 1;
+    box-shadow: 0 10px 30px -5px rgba(60, 48, 35, 0.15);
+  }
+}
+
+.animate-page-turn-forward {
+  animation: pageTurnForward 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-page-incoming-forward {
+  animation: pageTurnIncomingForward 0.28s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+}
+
+.animate-page-turn-backward {
+  animation: pageTurnBackward 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-page-incoming-backward {
+  animation: pageTurnIncomingBackward 0.28s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
 }
 
 /* Custom Scrollbar */
@@ -73,9 +246,151 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(140, 125, 105, 0.3);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(140, 125, 105, 0.5);
 }
+
+/* Ocultar badge flotante de herramientas de desarrollo de Next.js */
+nextjs-portal, [data-nextjs-toast], #__next-build-watcher {
+  display: none !important;
+}
+
+/* =========================================================================
+   CSS Loader 6 (https://github.com/mPooja-15/css-loader-pm)
+   Cubo isométrico 3D volteándose sobre una base de 4 bloques
+   ========================================================================= */
+.css-loader-6 {
+  width: 48px;
+  height: 48px;
+  display: inline-block;
+  position: relative;
+  transform: rotate(45deg);
+  transform-origin: center center;
+}
+
+.css-loader-6::before {
+  content: "";
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  left: 0;
+  top: -24px;
+  animation: animloader6 4s ease infinite;
+}
+
+.css-loader-6::after {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  background: var(--loader-accent, #00A82D);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  animation: animloader6_flip 2s ease infinite;
+}
+
+@keyframes animloader6 {
+  0% {
+    box-shadow: 0 24px rgba(0, 0, 0, 0), 24px 24px rgba(0, 0, 0, 0),
+      24px 48px rgba(0, 0, 0, 0), 0px 48px rgba(0, 0, 0, 0);
+  }
+  12% {
+    box-shadow: 0 24px var(--loader-track, #D6D3D1), 24px 24px rgba(0, 0, 0, 0),
+      24px 48px rgba(0, 0, 0, 0), 0px 48px rgba(0, 0, 0, 0);
+  }
+  25% {
+    box-shadow: 0 24px var(--loader-track, #D6D3D1), 24px 24px var(--loader-track, #D6D3D1),
+      24px 48px rgba(0, 0, 0, 0), 0px 48px rgba(0, 0, 0, 0);
+  }
+  37% {
+    box-shadow: 0 24px var(--loader-track, #D6D3D1), 24px 24px var(--loader-track, #D6D3D1),
+      24px 48px var(--loader-track, #D6D3D1), 0px 48px rgba(0, 0, 0, 0);
+  }
+  50% {
+    box-shadow: 0 24px var(--loader-track, #D6D3D1), 24px 24px var(--loader-track, #D6D3D1),
+      24px 48px var(--loader-track, #D6D3D1), 0px 48px var(--loader-track, #D6D3D1);
+  }
+  62% {
+    box-shadow: 0 24px rgba(0, 0, 0, 0), 24px 24px var(--loader-track, #D6D3D1),
+      24px 48px var(--loader-track, #D6D3D1), 0px 48px var(--loader-track, #D6D3D1);
+  }
+  75% {
+    box-shadow: 0 24px rgba(0, 0, 0, 0), 24px 24px rgba(0, 0, 0, 0),
+      24px 48px var(--loader-track, #D6D3D1), 0px 48px var(--loader-track, #D6D3D1);
+  }
+  87% {
+    box-shadow: 0 24px rgba(0, 0, 0, 0), 24px 24px rgba(0, 0, 0, 0),
+      24px 48px rgba(0, 0, 0, 0), 0px 48px var(--loader-track, #D6D3D1);
+  }
+  100% {
+    box-shadow: 0 24px rgba(0, 0, 0, 0), 24px 24px rgba(0, 0, 0, 0),
+      24px 48px rgba(0, 0, 0, 0), 0px 48px rgba(0, 0, 0, 0);
+  }
+}
+
+@keyframes animloader6_flip {
+  0% {
+    transform: translate(0, 0) rotateX(0) rotateY(0);
+  }
+  25% {
+    transform: translate(100%, 0) rotateX(0) rotateY(180deg);
+  }
+  50% {
+    transform: translate(100%, 100%) rotateX(-180deg) rotateY(180deg);
+  }
+  75% {
+    transform: translate(0, 100%) rotateX(-180deg) rotateY(360deg);
+  }
+  100% {
+    transform: translate(0, 0) rotateX(0) rotateY(360deg);
+  }
+}
+
+/* Variante parte 2: Cross Wheel Spinner */
+.css-loader-6-wheel {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  color: var(--loader-accent, #00A82D);
+  background: radial-gradient(
+    farthest-side,
+    currentColor calc(100% - 6.7px),
+    #0000 calc(100% - 5.6px) 0
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    #0000 calc(100% - 14.6px),
+    #000 calc(100% - 13.4px)
+  );
+  border-radius: 50%;
+  animation: spinner-sm4bhi 2s infinite linear;
+}
+
+.css-loader-6-wheel::before,
+.css-loader-6-wheel::after {
+  content: "";
+  grid-area: 1/1;
+  background: linear-gradient(currentColor 0 0) center,
+    linear-gradient(currentColor 0 0) center;
+  background-size: 100% 10px, 10px 100%;
+  background-repeat: no-repeat;
+}
+
+.css-loader-6-wheel::after {
+  transform: rotate(45deg);
+}
+
+@keyframes spinner-sm4bhi {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+
+

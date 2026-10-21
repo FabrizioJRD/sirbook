@@ -15,3 +15,26 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+
+  postgres:
+    container_name: sirbook-postgres
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sirbook
+      POSTGRES_PASSWORD: sirbook_password
+      POSTGRES_DB: sirbook
+    volumes:
+      - sirbook_pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  sirbook_pgdata:
+

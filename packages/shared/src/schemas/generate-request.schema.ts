@@ -5,7 +5,8 @@ export const GenerateBlockRequestSchema = z.object({
   mode: z.enum(['concept', 'graphic', 'curiosity']),
   notebookTitle: z.string().optional(),
   sectionTitle: z.string().optional(),
-  forceRefresh: z.boolean().default(false)
+  forceRefresh: z.boolean().default(false),
+  apiKey: z.string().optional()
 });
 
 export type GenerateBlockRequest = z.infer<typeof GenerateBlockRequestSchema>;

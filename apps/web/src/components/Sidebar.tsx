@@ -2,7 +2,19 @@
 
 import React, { useState } from 'react';
 import { Notebook } from '@sirbook/shared';
-import { Book, Plus, Sparkles, Folder, Layers, Cloud, HardDrive } from 'lucide-react';
+import {
+  Book,
+  Plus,
+  Sparkles,
+  Folder,
+  Layers,
+  Cloud,
+  HardDrive,
+  Trash2,
+  FileText,
+  Zap,
+  BookOpen
+} from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 interface SidebarProps {
@@ -10,6 +22,11 @@ interface SidebarProps {
   activeNotebookId: string | null;
   onSelectNotebook: (id: string) => void;
   onCreateNotebook: (title: string, color: string, icon: string) => void;
+  onDeleteNotebook?: (id: string) => void;
+  currentView: 'notebooks' | 'notepad';
+  onSwitchView: (view: 'notebooks' | 'notepad') => void;
+  onOpenAIStats: () => void;
+  costSavedUSD: number;
 }
 
 const PRESET_COLORS = [
@@ -27,6 +44,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeNotebookId,
   onSelectNotebook,
   onCreateNotebook,
+  onDeleteNotebook,
+  currentView,
+  onSwitchView,
+  onOpenAIStats,
+  costSavedUSD,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -43,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside className="w-72 h-screen flex flex-col glass-panel border-r border-white/5 select-none shrink-0">
       {/* Brand Header */}
-      <div className="p-5 border-b border-white/5 flex items-center justify-between">
+      <div className="p-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Book className="w-5 h-5 text-white" />
@@ -55,22 +77,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 v2.0
               </span>
             </div>
-            <p className="text-xs text-zinc-400">Cuadernos Inteligentes</p>
+            <p className="text-xs text-zinc-400">Cuadernos con IA y Búsqueda</p>
           </div>
         </div>
       </div>
 
+      {/* Main View Switcher */}
+      <div className="p-3 border-b border-white/5 space-y-1">
+        <button
+          onClick={() => onSwitchView('notebooks')}
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+            currentView === 'notebooks'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-zinc-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Cuadernos Inteligentes</span>
+        </button>
+
+        <button
+          onClick={() => onSwitchView('notepad')}
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+            currentView === 'notepad'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-zinc-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Bloc de Notas [Tab IA]</span>
+        </button>
+      </div>
+
+      {/* Cost & AI Engine Quick Badge */}
+      <div className="px-3 py-2.5 bg-black/20 border-b border-white/5 flex items-center justify-between text-xs">
+        <button
+          onClick={onOpenAIStats}
+          className="w-full flex items-center justify-between p-2 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 transition-all text-left group"
+        >
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <div>
+              <div className="text-[11px] font-bold text-emerald-300">Motor IA & Ahorro</div>
+              <div className="text-[10px] text-zinc-400">${costSavedUSD.toFixed(3)} USD ahorrados</div>
+            </div>
+          </div>
+          <span className="text-[10px] text-zinc-400 group-hover:text-white">Ver HUD →</span>
+        </button>
+      </div>
+
       {/* Sync Status Badge */}
-      <div className="px-5 py-2.5 bg-black/20 border-b border-white/5 flex items-center justify-between text-xs">
-        <span className="text-zinc-400">Almacenamiento:</span>
-        <div className="flex items-center gap-1.5">
+      <div className="px-4 py-2 border-b border-white/5 flex items-center justify-between text-[11px] text-zinc-400">
+        <span>Almacenamiento:</span>
+        <div className="flex items-center gap-1.5 font-medium">
           {isSupabaseConfigured ? (
-            <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
-              <Cloud className="w-3.5 h-3.5" /> Supabase Cloud
+            <span className="inline-flex items-center gap-1 text-emerald-400">
+              <Cloud className="w-3 h-3" /> Supabase Cloud
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-amber-400 font-medium" title="Almacenamiento local activo">
-              <HardDrive className="w-3.5 h-3.5" /> Local Sync
+            <span className="inline-flex items-center gap-1 text-amber-400" title="Almacenamiento local activo">
+              <HardDrive className="w-3 h-3" /> Local Sync
             </span>
           )}
         </div>
@@ -92,26 +158,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {notebooks.map((nb) => {
-          const isActive = nb.id === activeNotebookId;
+          const isActive = nb.id === activeNotebookId && currentView === 'notebooks';
           return (
-            <button
+            <div
               key={nb.id}
-              onClick={() => onSelectNotebook(nb.id)}
-              className={`w-full group text-left px-3.5 py-2.5 rounded-xl flex items-center gap-3 transition-all duration-150 ${
+              className={`w-full group px-3 py-2.5 rounded-xl flex items-center justify-between transition-all duration-150 cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600/15 text-white border border-indigo-500/30 shadow-sm'
                   : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
               }`}
+              onClick={() => {
+                onSelectNotebook(nb.id);
+                if (currentView !== 'notebooks') onSwitchView('notebooks');
+              }}
             >
-              <div
-                className="w-3 h-3 rounded-full shrink-0 shadow-sm"
-                style={{ backgroundColor: nb.cover_color }}
-              />
-              <span className="truncate text-sm font-medium flex-1">{nb.title}</span>
-              {isActive && (
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-              )}
-            </button>
+              <div className="flex items-center gap-2.5 truncate flex-1 mr-2">
+                <div
+                  className="w-3 h-3 rounded-full shrink-0 shadow-sm"
+                  style={{ backgroundColor: nb.cover_color }}
+                />
+                <span className="truncate text-xs font-medium">{nb.title}</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse mr-1" />
+                )}
+                {onDeleteNotebook && notebooks.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`¿Eliminar el cuaderno "${nb.title}"?`)) {
+                        onDeleteNotebook(nb.id);
+                      }
+                    }}
+                    className="p-1 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 rounded transition-opacity"
+                    title="Eliminar cuaderno"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
           );
         })}
 
@@ -130,10 +218,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Quick Tips Footer */}
-      <div className="p-4 border-t border-white/5 bg-zinc-950/40">
-        <div className="flex items-center gap-2 text-xs text-zinc-400">
-          <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>Escribe palabras clave y la IA sintetizará el cuaderno.</span>
+      <div className="p-3 border-t border-white/5 bg-zinc-950/40">
+        <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>Escribe palabras clave y la IA sintetiza el cuaderno.</span>
         </div>
       </div>
 

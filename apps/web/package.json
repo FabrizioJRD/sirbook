@@ -12,14 +12,25 @@
   "dependencies": {
     "@sirbook/shared": "*",
     "@supabase/supabase-js": "^2.49.1",
+    "bcryptjs": "^3.0.3",
+    "html2canvas": "^1.4.1",
+    "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.16.0",
     "mermaid": "^11.4.1",
     "next": "^15.1.7",
+    "page-flip": "^2.0.7",
+    "perfect-freehand": "^1.2.3",
+    "pg": "^8.23.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "roughjs": "^4.6.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.13.1",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.4.20",

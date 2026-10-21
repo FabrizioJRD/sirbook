@@ -1,313 +1,319 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+  ScrollView,
+  Alert,
 } from 'react-native';
-import { Notebook, Section, Block, GenerationMode } from '@sirbook/shared';
-import { MobileBlockList } from './src/components/MobileBlockList';
-import { generateBlockContentMobile } from './src/services/api';
+import { Note } from '@sirbook/shared';
+import { fetchAutocompleteMobile } from './src/services/api';
 
-const SAMPLE_NOTEBOOKS: Notebook[] = [
+const INITIAL_NOTES: Note[] = [
   {
-    id: 'nb-bio',
-    user_id: 'user-demo',
-    title: 'Bioquímica Celular',
-    description: 'Metabolismo y fisiología',
-    cover_color: '#4F46E5',
-    icon: 'book',
+    id: 'note-mob-1',
+    title: 'Apuntes de Biología Celular',
+    content: `Mitocondria: orgánulo celular eucariota responsable de la respiración celular y de generar la mayor parte del ATP celular.
+
+Ciclo de Krebs: ruta metabólica aeróbica central que oxida acetil-CoA en la matriz mitocondrial produciendo NADH, FADH2 y ATP.
+
+Escribe abajo Fotosíntesis y toca la barra flotante arriba del teclado...`,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'nb-ai',
-    user_id: 'user-demo',
-    title: 'Inteligencia Artificial',
-    description: 'LLMs y Redes Neuronales',
-    cover_color: '#7C3AED',
-    icon: 'book',
+    id: 'note-mob-2',
+    title: 'Algoritmos y Estructuras',
+    content: `Recursión: técnica computacional donde una función se llama a sí misma para resolver subproblemas hasta un caso base.`,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
 ];
 
-const SAMPLE_SECTIONS: Section[] = [
-  {
-    id: 'sec-krebs',
-    notebook_id: 'nb-bio',
-    user_id: 'user-demo',
-    title: 'Ciclo de Krebs',
-    position: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'sec-mitosis',
-    notebook_id: 'nb-bio',
-    user_id: 'user-demo',
-    title: 'Mitosis',
-    position: 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-const INITIAL_BLOCKS: Block[] = [
-  {
-    id: 'blk-mob-1',
-    section_id: 'sec-krebs',
-    notebook_id: 'nb-bio',
-    user_id: 'user-demo',
-    mode: 'concept',
-    keyword: 'Ciclo de Krebs',
-    context_path: 'Bioquímica Celular > Ciclo de Krebs',
-    position: 0,
-    content: {
-      modo: 'concepto',
-      titulo: 'Ciclo de Krebs (Ácido Cítrico)',
-      contexto: 'Bioquímica Celular > Ciclo de Krebs',
-      definicion_corta: 'Ruta metabólica aeróbica central que oxida acetil-CoA para producir ATP, NADH y FADH2 en la matriz mitocondrial.',
-      puntos_clave: [
-        'Condensación de oxalacetato con acetil-CoA.',
-        'Genera 3 NADH, 1 FADH2 y 1 GTP/ATP.',
-        'Ruta anfibólica de alta relevancia biológica.'
-      ],
-      aplicaciones: ['Bioenergética', 'Metabolismo celular'],
-      fuentes: [
-        {
-          title: 'Nature Education - Citric Acid Cycle',
-          url: 'https://www.nature.com'
-        }
-      ]
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'blk-mob-2',
-    section_id: 'sec-krebs',
-    notebook_id: 'nb-bio',
-    user_id: 'user-demo',
-    mode: 'graphic',
-    keyword: 'Fases de Krebs',
-    context_path: 'Bioquímica Celular > Ciclo de Krebs',
-    position: 1,
-    content: {
-      modo: 'grafico',
-      tipo_grafico: 'mermaid_flowchart',
-      titulo: 'Fases del Ciclo de Krebs',
-      contexto: 'Bioquímica Celular > Ciclo de Krebs',
-      codigo_render: `graph TD;\n  A["Oxalacetato"] --> B["Citrato"];\n  B --> C["Isocitrato"];\n  C --> D["Alfa-Cetoglutarato"];\n  D --> E["Succinil-CoA"];\n  E --> A;`,
-      descripcion_corta: 'Circuito metabólico continuo con soporte de Pan & Zoom.',
-      fuentes: []
-    },
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-];
+interface MobileSuggestion {
+  keyword: string;
+  completionText: string;
+  insertPosition: number;
+}
 
 export default function App() {
-  const [notebooks] = useState<Notebook[]>(SAMPLE_NOTEBOOKS);
-  const [activeNotebook, setActiveNotebook] = useState<Notebook>(SAMPLE_NOTEBOOKS[0]);
-  const [sections] = useState<Section[]>(SAMPLE_SECTIONS);
-  const [activeSection, setActiveSection] = useState<Section>(SAMPLE_SECTIONS[0]);
-  const [blocks, setBlocks] = useState<Block[]>(INITIAL_BLOCKS);
-
-  const [keyword, setKeyword] = useState('');
-  const [selectedMode, setSelectedMode] = useState<GenerationMode>('concept');
-  const [studyMode, setStudyMode] = useState(false);
+  const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
+  const [activeNoteId, setActiveNoteId] = useState<string>(INITIAL_NOTES[0].id);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [suggestion, setSuggestion] = useState<MobileSuggestion | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [cursorPos, setCursorPos] = useState<number>(0);
 
-  const handleGenerate = async () => {
-    if (!keyword.trim() || isLoading) return;
+  const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0];
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    if (selectedMode === 'free') {
-      const freeBlock: Block = {
-        id: `blk-${Date.now()}`,
-        section_id: activeSection.id,
-        notebook_id: activeNotebook.id,
-        user_id: 'user-demo',
-        mode: 'free',
-        keyword,
-        context_path: `${activeNotebook.title} > ${activeSection.title}`,
-        position: 0,
-        content: {
-          modo: 'libre',
-          titulo: keyword,
-          markdown: ''
-        },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setBlocks((prev) => [freeBlock, ...prev]);
-      setKeyword('');
+  const updateActiveNote = (fields: Partial<Note>) => {
+    setNotes((prev) =>
+      prev.map((n) =>
+        n.id === activeNote.id
+          ? { ...n, ...fields, updated_at: new Date().toISOString() }
+          : n
+      )
+    );
+  };
+
+  const handleCreateNote = () => {
+    const newNote: Note = {
+      id: `note-${Date.now()}`,
+      title: 'Nueva Nota',
+      content: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setNotes([newNote, ...notes]);
+    setActiveNoteId(newNote.id);
+    setIsDrawerOpen(false);
+  };
+
+  const handleDeleteNote = (id: string) => {
+    if (notes.length <= 1) {
+      Alert.alert('Aviso', 'Debes mantener al menos una nota.');
       return;
     }
-
-    setIsLoading(true);
-    try {
-      const res = await generateBlockContentMobile({
-        keyword: keyword.trim(),
-        mode: selectedMode,
-        notebookTitle: activeNotebook.title,
-        sectionTitle: activeSection.title,
-        forceRefresh: false,
-      });
-
-      if (res.success && res.content) {
-        const newBlock: Block = {
-          id: `blk-${Date.now()}`,
-          section_id: activeSection.id,
-          notebook_id: activeNotebook.id,
-          user_id: 'user-demo',
-          mode: selectedMode,
-          keyword,
-          context_path: `${activeNotebook.title} > ${activeSection.title}`,
-          position: 0,
-          content: res.content,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setBlocks((prev) => [newBlock, ...prev]);
-        setKeyword('');
-      }
-    } catch (err: unknown) {
-      console.warn('[Mobile] Error al generar bloque:', err);
-    } finally {
-      setIsLoading(false);
+    const nextNotes = notes.filter((n) => n.id !== id);
+    setNotes(nextNotes);
+    if (activeNoteId === id) {
+      setActiveNoteId(nextNotes[0].id);
     }
+  };
+
+  // Extraer término candidato antes del cursor
+  const extractCandidateKeyword = (text: string, pos: number): string | null => {
+    const textBefore = text.slice(0, pos);
+    const lastLine = textBefore.split('\n').pop() || '';
+    const trimmed = lastLine.trim();
+
+    if (!trimmed || trimmed.length < 3) return null;
+
+    const match = trimmed.match(/(?:^|[#*•\->:,;]|\b)([A-Za-zÀ-ÿ0-9\s_-]{3,35}):?$/);
+    if (match && match[1]) {
+      const kw = match[1].trim();
+      if (kw.length >= 3 && !['que', 'los', 'las', 'por', 'con', 'para', 'una', 'uno'].includes(kw.toLowerCase())) {
+        return kw;
+      }
+    }
+    return null;
+  };
+
+  const triggerAutocomplete = (text: string, pos: number) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSuggestion(null);
+
+    debounceTimerRef.current = setTimeout(async () => {
+      const kw = extractCandidateKeyword(text, pos);
+      if (kw) {
+        setIsLoading(true);
+        try {
+          const res = await fetchAutocompleteMobile(kw, activeNote.title);
+          if (res && res.completionText) {
+            setSuggestion({
+              keyword: kw,
+              completionText: res.completionText,
+              insertPosition: pos,
+            });
+          }
+        } catch {
+          setSuggestion(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }, 450);
+  };
+
+  const handleContentChange = (val: string) => {
+    updateActiveNote({ content: val });
+    triggerAutocomplete(val, cursorPos);
+  };
+
+  const handleSelectionChange = (e: any) => {
+    const pos = e.nativeEvent.selection.start;
+    setCursorPos(pos);
+  };
+
+  // Aceptar sugerencia desde el chip móvil
+  const acceptSuggestion = () => {
+    if (!suggestion) return;
+
+    const before = activeNote.content.slice(0, cursorPos);
+    const after = activeNote.content.slice(cursorPos);
+    const updatedContent = before + suggestion.completionText + after;
+
+    updateActiveNote({ content: updatedContent });
+    setSuggestion(null);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#0C0D0E" />
+      <StatusBar barStyle="light-content" backgroundColor="#0B0C0E" />
 
-      {/* Header */}
+      {/* Header móvil */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.coverBadge, { backgroundColor: activeNotebook.cover_color }]} />
-          <View>
-            <Text style={styles.appTitle}>Sirbook Móvil</Text>
-            <Text style={styles.notebookSubtitle} numberOfLines={1}>
-              {activeNotebook.title} • {activeSection.title}
-            </Text>
-          </View>
+        <TouchableOpacity
+          onPress={() => setIsDrawerOpen(true)}
+          style={styles.headerButton}
+        >
+          <Text style={styles.menuIcon}>☰</Text>
+        </TouchableOpacity>
+
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Sirbook</Text>
+          <Text style={styles.headerSubtitle}>Cuaderno Inteligente</Text>
         </View>
 
-        {/* Toggle Modo Estudio */}
-        <TouchableOpacity
-          style={[styles.studyToggle, studyMode ? styles.studyToggleActive : null]}
-          onPress={() => setStudyMode((prev) => !prev)}
-        >
-          <Text style={[styles.studyToggleText, studyMode ? styles.studyToggleTextActive : null]}>
-            🎓 {studyMode ? 'Estudio ON' : 'Estudio'}
-          </Text>
+        <TouchableOpacity onPress={handleCreateNote} style={styles.newButton}>
+          <Text style={styles.newButtonText}>+ Nota</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Notebooks Selector Pills */}
-      <View style={styles.selectorBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsScroll}>
-          {notebooks.map((nb) => (
-            <TouchableOpacity
-              key={nb.id}
-              style={[
-                styles.pill,
-                nb.id === activeNotebook.id ? styles.pillActive : null,
-              ]}
-              onPress={() => setActiveNotebook(nb)}
-            >
-              <View style={[styles.pillDot, { backgroundColor: nb.cover_color }]} />
-              <Text style={[styles.pillText, nb.id === activeNotebook.id ? styles.pillTextActive : null]}>
-                {nb.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Sections Selector Pills */}
-      <View style={styles.sectionBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsScroll}>
-          {sections.map((sec) => (
-            <TouchableOpacity
-              key={sec.id}
-              style={[
-                styles.secPill,
-                sec.id === activeSection.id ? styles.secPillActive : null,
-              ]}
-              onPress={() => setActiveSection(sec)}
-            >
-              <Text style={[styles.secPillText, sec.id === activeSection.id ? styles.secPillTextActive : null]}>
-                # {sec.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Main Content Area */}
-      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
-        {/* Input Bar */}
-        <View style={styles.inputCard}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <ScrollView style={styles.editorScroll} keyboardShouldPersistTaps="handled">
+          {/* Título editable */}
           <TextInput
-            value={keyword}
-            onChangeText={setKeyword}
-            placeholder="Escribe palabra clave (ej. Glucólisis)..."
-            placeholderTextColor="#71717A"
-            style={styles.textInput}
+            style={styles.titleInput}
+            value={activeNote.title}
+            onChangeText={(title) => updateActiveNote({ title })}
+            placeholder="Título del apunte..."
+            placeholderTextColor="#52525b"
           />
 
-          {/* Mode Selector Buttons */}
-          <View style={styles.modeRow}>
-            {(['concept', 'graphic', 'curiosity', 'free'] as GenerationMode[]).map((m) => {
-              const labels: Record<GenerationMode, string> = {
-                concept: 'Concepto',
-                graphic: 'Gráfico',
-                curiosity: 'Dato',
-                free: 'Libre',
-              };
-              const isSel = selectedMode === m;
-              return (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.modeButton, isSel ? styles.modeButtonSelected : null]}
-                  onPress={() => setSelectedMode(m)}
-                >
-                  <Text style={[styles.modeButtonText, isSel ? styles.modeButtonTextSelected : null]}>
-                    {labels[m]}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+          {/* Área de escritura */}
+          <TextInput
+            style={styles.contentInput}
+            value={activeNote.content}
+            onChangeText={handleContentChange}
+            onSelectionChange={handleSelectionChange}
+            placeholder="Escribe tus notas aquí... Cuando escribas una palabra clave, aparecerá la sugerencia sobre el teclado."
+            placeholderTextColor="#3f3f46"
+            multiline
+            scrollEnabled={false}
+          />
+        </ScrollView>
+
+        {/* Barra / Chip flotante sobre el teclado móvil */}
+        {suggestion && (
+          <View style={styles.suggestionBar}>
+            <View style={styles.suggestionInfo}>
+              <Text style={styles.suggestionHeader}>
+                ✨ SUGERENCIA PARA "{suggestion.keyword}"
+              </Text>
+              <Text style={styles.suggestionSnippet} numberOfLines={2}>
+                {suggestion.keyword}
+                <Text style={styles.suggestionSnippetText}>
+                  {suggestion.completionText}
+                </Text>
+              </Text>
+            </View>
+
+            <View style={styles.suggestionActions}>
+              <TouchableOpacity
+                onPress={acceptSuggestion}
+                style={styles.acceptButton}
+              >
+                <Text style={styles.acceptButtonText}>Insertar ⇥</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setSuggestion(null)}
+                style={styles.dismissButton}
+              >
+                <Text style={styles.dismissButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        )}
 
-          <TouchableOpacity
-            style={[styles.generateButton, !keyword.trim() || isLoading ? styles.generateButtonDisabled : null]}
-            onPress={handleGenerate}
-            disabled={!keyword.trim() || isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <Text style={styles.generateButtonText}>⚡ Sintetizar en Cuaderno</Text>
-            )}
-          </TouchableOpacity>
+        {isLoading && (
+          <View style={styles.loadingIndicator}>
+            <ActivityIndicator size="small" color="#8b5cf6" />
+            <Text style={styles.loadingText}>Buscando concepto...</Text>
+          </View>
+        )}
+      </KeyboardAvoidingView>
+
+      {/* Modal / Drawer para lista de notas */}
+      <Modal
+        visible={isDrawerOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsDrawerOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.drawerContainer}>
+            <View style={styles.drawerHeader}>
+              <Text style={styles.drawerTitle}>Tus Notas</Text>
+              <TouchableOpacity onPress={() => setIsDrawerOpen(false)}>
+                <Text style={styles.closeDrawerText}>Cerrar ✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.drawerList}>
+              {notes.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.noteItem,
+                    item.id === activeNoteId && styles.noteItemActive,
+                  ]}
+                  onPress={() => {
+                    setActiveNoteId(item.id);
+                    setIsDrawerOpen(false);
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[
+                        styles.noteItemTitle,
+                        item.id === activeNoteId && styles.noteItemTitleActive,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.title || 'Nota sin título'}
+                    </Text>
+                    <Text style={styles.noteItemSnippet} numberOfLines={1}>
+                      {item.content || 'Nota vacía...'}
+                    </Text>
+                  </View>
+
+                  {notes.length > 1 && (
+                    <TouchableOpacity
+                      onPress={() => handleDeleteNote(item.id)}
+                      style={styles.deleteNoteButton}
+                    >
+                      <Text style={styles.deleteNoteText}>🗑</Text>
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              onPress={handleCreateNote}
+              style={styles.createNoteDrawerButton}
+            >
+              <Text style={styles.createNoteDrawerButtonText}>+ Nueva Nota</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Blocks List */}
-        <MobileBlockList
-          blocks={blocks}
-          studyMode={studyMode}
-          onDeleteBlock={(id) => setBlocks((prev) => prev.filter((b) => b.id !== id))}
-        />
-      </ScrollView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -315,7 +321,7 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0C0D0E',
+    backgroundColor: '#0B0C0E',
   },
   header: {
     flexDirection: 'row',
@@ -324,171 +330,207 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#111216',
   },
-  headerLeft: {
-    flexDirection: 'row',
+  headerButton: {
+    padding: 6,
+  },
+  menuIcon: {
+    color: '#a1a1aa',
+    fontSize: 20,
+  },
+  headerTitleContainer: {
     alignItems: 'center',
-    gap: 10,
-    flex: 1,
   },
-  coverBadge: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  appTitle: {
+  headerTitle: {
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '700',
   },
-  notebookSubtitle: {
-    fontSize: 11,
-    color: '#A1A1AA',
-  },
-  studyToggle: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#1C1E22',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  studyToggleActive: {
-    backgroundColor: 'rgba(234, 179, 8, 0.15)',
-    borderColor: '#EAB308',
-  },
-  studyToggleText: {
-    fontSize: 11,
+  headerSubtitle: {
+    color: '#8b5cf6',
+    fontSize: 10,
     fontWeight: '600',
-    color: '#A1A1AA',
   },
-  studyToggleTextActive: {
-    color: '#FDE047',
-  },
-  selectorBar: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  sectionBar: {
-    paddingVertical: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-  },
-  pillsScroll: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  newButton: {
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    borderColor: 'rgba(139, 92, 246, 0.4)',
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#1C1E22',
+    borderRadius: 8,
   },
-  pillActive: {
-    backgroundColor: '#312E81',
-    borderWidth: 1,
-    borderColor: '#6366F1',
-  },
-  pillDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  pillText: {
+  newButtonText: {
+    color: '#c4b5fd',
     fontSize: 12,
-    color: '#A1A1AA',
-    fontWeight: '500',
-  },
-  pillTextActive: {
-    color: '#FFFFFF',
     fontWeight: '600',
   },
-  secPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-  },
-  secPillActive: {
-    backgroundColor: '#27272A',
-  },
-  secPillText: {
-    fontSize: 11,
-    color: '#71717A',
-  },
-  secPillTextActive: {
-    color: '#E4E4E7',
-    fontWeight: '600',
-  },
-  scrollArea: {
+  container: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 16,
+  editorScroll: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 16,
   },
-  inputCard: {
-    backgroundColor: '#16181B',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    marginBottom: 16,
+  titleInput: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 12,
   },
-  textInput: {
-    backgroundColor: '#0C0D0E',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#FFFFFF',
+  contentInput: {
+    color: '#e4e4e7',
+    fontSize: 16,
+    lineHeight: 26,
+    minHeight: 300,
+    textAlignVertical: 'top',
+  },
+  suggestionBar: {
+    backgroundColor: '#1a1829',
+    borderColor: '#7c3aed',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginHorizontal: 12,
     marginBottom: 10,
-  },
-  modeRow: {
+    padding: 12,
+    borderRadius: 12,
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
-  },
-  modeButton: {
-    flex: 1,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#0C0D0E',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    justifyContent: 'space-between',
+    shadowColor: '#8b5cf6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  modeButtonSelected: {
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    borderColor: '#6366F1',
+  suggestionInfo: {
+    flex: 1,
+    marginRight: 10,
   },
-  modeButtonText: {
-    fontSize: 11,
-    color: '#71717A',
-    fontWeight: '500',
+  suggestionHeader: {
+    color: '#a78bfa',
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 2,
   },
-  modeButtonTextSelected: {
-    color: '#A5B4FC',
+  suggestionSnippet: {
+    color: '#c4b5fd',
+    fontSize: 12,
     fontWeight: '600',
   },
-  generateButton: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 10,
-    paddingVertical: 10,
+  suggestionSnippetText: {
+    color: '#d4d4d8',
+    fontWeight: '400',
+  },
+  suggestionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  acceptButton: {
+    backgroundColor: '#7c3aed',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginRight: 6,
+  },
+  acceptButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  dismissButton: {
+    padding: 8,
+  },
+  dismissButtonText: {
+    color: '#a1a1aa',
+    fontSize: 14,
+  },
+  loadingIndicator: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 6,
   },
-  generateButtonDisabled: {
-    opacity: 0.5,
+  loadingText: {
+    color: '#8b5cf6',
+    fontSize: 11,
+    marginLeft: 6,
   },
-  generateButtonText: {
-    fontSize: 13,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  drawerContainer: {
+    backgroundColor: '#14151b',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  drawerTitle: {
+    color: '#ffffff',
+    fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+  },
+  closeDrawerText: {
+    color: '#a1a1aa',
+    fontSize: 14,
+  },
+  drawerList: {
+    maxHeight: 350,
+  },
+  noteItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  noteItemActive: {
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    borderColor: 'rgba(139, 92, 246, 0.4)',
+    borderWidth: 1,
+  },
+  noteItemTitle: {
+    color: '#e4e4e7',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  noteItemTitleActive: {
+    color: '#c4b5fd',
+  },
+  noteItemSnippet: {
+    color: '#71717a',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  deleteNoteButton: {
+    padding: 6,
+  },
+  deleteNoteText: {
+    fontSize: 14,
+  },
+  createNoteDrawerButton: {
+    backgroundColor: '#7c3aed',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  createNoteDrawerButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

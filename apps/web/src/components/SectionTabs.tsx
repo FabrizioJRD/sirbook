@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react';
 import { Section } from '@sirbook/shared';
-import { Plus, Hash } from 'lucide-react';
+import { Plus, Hash, X } from 'lucide-react';
 
 interface SectionTabsProps {
   sections: Section[];
   activeSectionId: string | null;
   onSelectSection: (id: string) => void;
   onCreateSection: (title: string) => void;
+  onDeleteSection?: (id: string) => void;
 }
 
 export const SectionTabs: React.FC<SectionTabsProps> = ({
@@ -16,6 +17,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
   activeSectionId,
   onSelectSection,
   onCreateSection,
+  onDeleteSection,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -29,7 +31,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-1.5 px-6 py-2.5 border-b border-white/5 bg-black/20 overflow-x-auto select-none">
+    <div className="flex items-center gap-1.5 px-6 py-2 border-b border-white/5 bg-black/30 overflow-x-auto select-none">
       <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex items-center gap-1 mr-2 shrink-0">
         <Hash className="w-3.5 h-3.5" /> Secciones:
       </span>
@@ -37,17 +39,32 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
       {sections.map((sec) => {
         const isActive = sec.id === activeSectionId;
         return (
-          <button
+          <div
             key={sec.id}
-            onClick={() => onSelectSection(sec.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 transition-all duration-150 ${
+            className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all duration-150 cursor-pointer ${
               isActive
                 ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
             }`}
+            onClick={() => onSelectSection(sec.id)}
           >
-            {sec.title}
-          </button>
+            <span>{sec.title}</span>
+            {onDeleteSection && sections.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`¿Eliminar la sección "${sec.title}"?`)) {
+                    onDeleteSection(sec.id);
+                  }
+                }}
+                className="opacity-0 group-hover:opacity-100 hover:text-red-400 rounded p-0.5 transition-opacity"
+                title="Eliminar sección"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         );
       })}
 
@@ -64,7 +81,7 @@ export const SectionTabs: React.FC<SectionTabsProps> = ({
           />
           <button
             type="submit"
-            className="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg font-medium"
+            className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg font-medium"
           >
             Añadir
           </button>
